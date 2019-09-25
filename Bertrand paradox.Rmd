@@ -1,0 +1,327 @@
+---
+title: "Bertrand paradox"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Introduction
+
+The Bertrand paradox is a mathematical problem to show that probabilities may not be well defined if the mechanism or method that produces the random variable is not clearly defined.
+
+This paradox was proposed by Joseph Bertrand in his work Calcul des probabilités (1889). 
+
+The paradox is as follows : Consider an equilateral triangle inscribed in a circle. Suppose a chord of the circle is chosen at random. What is the probability that the chord is longer than a side of the triangle (=$\sqrt{3}$)?
+
+There are at least 3 methods to choose a chord **at random** and each gives a different result.
+
+1. The "random endpoints" method
+Choose two random points on the circumference of the circle and take the chord between them.
+probability : *1/3*
+
+2. The "random radius" method
+Choose a radius of the circle, choose a point on the radius and construct the chord through this point and perpendicular to the radius
+probability : *1/2*
+
+3. The "random midpoint" method
+Choose a point anywhere within the circle and construct a chord with the chosen point as its midpoint.
+probability ; *1/4*
+
+Why are those results different? I guessed this is because the probablistic distribution each follows is different. This is explaned below.
+
+
+
+# Theory
+
+1. The "random endpoints" method
+
+This can be considered as follows : 
+- Choose an angle $\theta$
+- The angle follows an uniform distribution
+- Take the arc of the angle on a circle of radius 1.
+- Take the chord $c$ of the arc
+- $0\leq \theta \leq \pi$ ($\pi$, not $2\pi$, should be enough for the symmetry)
+
+The geometry is below.
+
+```{r}
+plot(0,0, asp=1, xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main="The random endpoints method")
+angs <- seq(0, 2*pi, 2*pi/100)
+polygon(cos(angs), sin(angs))
+triangle <- c(c(0,0), c(0,1), c(cos(-pi/6), sin(-pi/6)), c(0,0))
+triangle <- matrix(triangle, ncol=2, byrow=T)
+polygon(triangle[,1], triangle[,2])
+text(0.1, 0.1, expression(paste(theta)))
+text(0.5, 0.5, expression(italic(c)))
+text(-0.1, 0.5, expression(1))
+```
+
+$$c = 2sin(\theta/2)$$
+
+Here's one issue. $\theta$ follows a uniform distribution $P(\theta) = 1/\pi$ but what probablistic distribution does $c$ follow?
+
+Let's consider the following problem. What is $Q(x)$ below where x is a continuous random variable?
+
+$$x \sim P(x) \\
+f(x) \sim Q(x)$$
+
+
+Since $x$ is with $P(x)$, the following is true.
+
+$$P[a\leq X\leq b]=\int _{a}^{b}f(x)\,dx$$
+
+Thus, the following is true.
+
+$$P[A\leq f(X)\leq B] = P[a\leq f(X)\leq b] \\
+(a=min(f^{-1}(A), f^{-1}(B)), b=max(f^{-1}(A), f^{-1}(B)))\\
+=\int _{a}^{b}P(x)\,dx \\
+=\int _{f^{-1}(A)}^{f^{-1}(B)}sign\,P(x)\,dx \\
+(sign=
+  \begin{cases}
+    1\,\,(f^{-1}(B) \geq f^{-1}(A))\\
+    -1\,\,(f^{-1}(B) \lt f^{-1}(A))
+  \end{cases}
+)\\
+=\int _{A}^{B}sign\,P(f^{-1}(y))\,d{f^{-1}(y)} \\
+=\int _{A}^{B}sign\,P(f^{-1}(y))\,\frac{d{f^{-1}(y)}}{dy} dy \\
+\therefore Q(x) = sign\,P(f^{-1}(x))\,\frac{d{f^{-1}(x)}}{dx}$$
+
+
+Thus, in this "random endpoints" method, where $P(x)=1/\pi$ and $f^{-1}(c) = 2 arcsin(c/2)$,$Q(c)$ is as follows.
+
+$$Q(c) = sign\,P(f^{-1}(c))\,\frac{d{f^{-1}(c)}}{dc}\\
+=\frac{1}{\pi \sqrt{1-(c/2)^2}}$$
+
+Therefore, the probability that $c\gt\sqrt{3}$ is,
+
+$$\int_{\sqrt{3}}^{2} \frac{1}{\pi \sqrt{1-(c/2)^2}} dc \\
+=\int_{\frac{2\pi}{3}}^{\pi} \frac{1}{\pi} d\theta \\
+= \frac{1}{\pi} (\pi - \frac{2\pi}{3}) \\
+= \frac{1}{3}$$
+
+This is consistent with the answer given.
+
+
+
+2. The "random radius" method
+
+This can be considered as follows : 
+- Choose a radius of the circle
+- Choose a point on the radius (let the distance between the center of the circle and the point be $r$)
+- $0 \leq r \leq 1$ and $r \sim P(r) = 1$
+- Make the chord through this point and perpendicular to the radius
+
+The geometry is below.
+
+```{r}
+plot(0,0, asp=1, xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main="The random radius method")
+angs <- seq(0, 2*pi, 2*pi/100)
+polygon(cos(angs), sin(angs))
+triangle <- c(c(0,0), c(cos(pi/6),sin(pi/6)), c(cos(5*pi/6), sin(5*pi/6)))
+triangle <- matrix(triangle, ncol=2, byrow=T)
+polygon(triangle[,1], triangle[,2])
+lines(c(0,0), c(0,1))
+text(0.1, 0.3, expression(italic(r)))
+text(0.1, 0.6, expression(italic(c)))
+text(0.5, 0.1, expression(1))
+```
+
+$$c = 2\sqrt{1-r^2} \\
+\Leftrightarrow r=\sqrt{1-(c/2)^2}$$
+
+We don't have to consider "Choose a radius of the circle" when we build a model for the symmetry of a circle. Thus, in this "random radius" method, where $P(x)=1$ and $f^{-1}(c) = \sqrt{1-(c/2)^2}$,$Q(c)$ is as follows.
+
+$$Q(c) = sign\,P(f^{-1}(c))\,\frac{d{f^{-1}(c)}}{dc}\\
+=- \frac{d{f^{-1}(c)}}{dc}\\
+=\frac{c}{4 \sqrt{1-(c/2)^2}}$$
+
+Notice $sign = -1$ here. Therefore, the probability that $c\gt\sqrt{3}$ is,
+
+$$\int_{2}^{\sqrt{3}} \frac{c}{4 \sqrt{1-(c/2)^2}} dc \\
+= [\sqrt{1-(c/2)^2}]_{2}^{\sqrt{3}} \\
+= \frac{1}{2}$$
+
+This is consistent with the answer given.
+
+
+
+3. The "random midpoint" method
+
+Choose a point anywhere within the circle and construct a chord with the chosen point as its midpoint.
+
+This can be considered as follows : 
+- Choose a radius of the circle
+- Choose a point on the radius (let the distance between the center of the circle and the point be $r$)
+- $0 \leq r \leq 1$ and $r \sim P(r) = 2r$
+- Make the chord through this point and perpendicular to the radius
+
+The geometry is below.
+
+```{r}
+plot(0,0, asp=1, xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main="The random midpoint method")
+angs <- seq(0, 2*pi, 2*pi/100)
+polygon(cos(angs), sin(angs))
+triangle <- c(c(0,0), c(cos(pi/6),sin(pi/6)), c(cos(5*pi/6), sin(5*pi/6)))
+triangle <- matrix(triangle, ncol=2, byrow=T)
+polygon(triangle[,1], triangle[,2])
+lines(c(0,0), c(0,1))
+text(0.1, 0.3, expression(italic(r)))
+text(0.1, 0.6, expression(italic(c)))
+text(0.5, 0.1, expression(1))
+```
+
+How can "Choose a point anywhere within the circle" be replaced with choosing a radius and a point on it? 
+
+The former can be alternatively expressed as "dividing a circle by $r$ and $\theta$ into infinite minute partitions and choosing one of them." This is identical to choosing a radius of the circle (a "strip" of partitions) and a point (a specific partition) on it.
+
+The geometry is as follows.
+
+```{r}
+plot(0,0, asp=1, xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main="Infinite division of a circle")
+angs <- seq(0, 2*pi, 2*pi/100)
+for(i in 1:10) polygon(cos(angs)*i/10, sin(angs)*i/10)
+angs <- seq(0, 2*pi, 2*pi/36)
+for(i in 0:36) lines(c(0,cos(angs[i+1])), c(0,sin(angs[i+1])))
+angs <- seq(0, 2*pi/36, 2*pi/360)
+xs <- cos(angs)
+ys <- sin(angs)
+polygon(c(0.7*xs, 0.8*rev(xs)), c(0.7*ys, 0.8*rev(ys)), col="black")
+
+```
+
+The probability that each partition is picked should be based on its area. Let the radius and angle corresponding to the black square in the circle above be $r$ and $\theta$ then the area of the black square is $r\,dr\,d\theta$. So the probability that a partition is chosen is proportional to $r$. This is the background for $r \sim P(r) = 2r$. The integral $\int_0^1 C\,r\,dr=1$ gives $C=2$. 
+
+Let's go back to the main part.
+
+$$c = 2\sqrt{1-r^2} \\
+\Leftrightarrow r=\sqrt{1-(c/2)^2}$$
+
+We don't have to consider "Choose a radius of the circle" when we build a model for the symmetry of a circle. Thus, in this "random midpoint" method, where $P(x)=2r$ and $f^{-1}(c) = \sqrt{1-(c/2)^2}$,$Q(c)$ is as follows.
+
+$$Q(c) = sign\,P(f^{-1}(c))\,\frac{d{f^{-1}(c)}}{dc}\\
+ = -\,2\sqrt{1-(c/2)^2}\,\frac{d{\sqrt{1-(c/2)^2}}}{dc}\\
+=\frac{c}{2}$$
+
+Notice $sign = -1$ here. Therefore, the probability that $c\gt\sqrt{3}$ is,
+
+$$\int_{\sqrt{3}}^{2} \frac{c}{2} dc \\
+= [\frac{c^2}{4}]_{\sqrt{3}}^{2} \\
+= \frac{1}{4}$$
+
+This is consistent with the answer given.
+
+
+
+# Experiment
+
+Here we validate the model with computer simulation. The following function was used to create a histogram.
+
+```{r}
+library(ggplot2)
+hist.chords <- function(df, theor.func){
+  
+  legend.title <- expression(paste("Is greater than ", sqrt(3)))
+  
+  g <- ggplot(df, aes(x = chords)) + 
+    ylim(0,4) +
+    geom_histogram(aes(y=..density..)) +
+    guides(fill=guide_legend(title=legend.title)) +
+    stat_function(fun = theor.func,
+                  lwd = 1, 
+                  col = 'red')
+  plot(g)
+}
+```
+
+1. The "random endpoints" method
+
+```{r}
+set.seed(1)
+n <- 10000
+thetas <- runif(n, 0, pi)
+chords <- 2*sin(thetas/2)
+df <- data.frame(chords=chords, longer=chords>sqrt(3))
+# theoretical curve for probablistic density
+f <- function(x) 1/pi/sqrt(1-(x/2)^2)
+# the probability that c > sqrt(3)
+prob <- sum(df$chords>sqrt(3))/length(df$chords)
+hist.chords(df, f)
+```
+
+The theoretical curve fits well to the histogram. The probability that $c\gt\sqrt{3}$ was `r prob` = $\frac{1}{3}$.
+
+
+2. The "random radius" method
+
+```{r}
+set.seed(1)
+n <- 10000
+r <- runif(n, 0, 1)
+chords <- 2*sqrt(1-r^2)
+df <- data.frame(chords=chords, longer=chords>sqrt(3))
+# theoretical curve for probablistic density
+f <- function(x) x/4/sqrt(1-(x/2)^2)
+# the probability that c > sqrt(3)
+prob <- sum(df$chords>sqrt(3))/length(df$chords)
+hist.chords(df, f)
+```
+
+The theoretical curve fits well to the histogram. The probability that $c\gt\sqrt{3}$ was `r prob` = $\frac{1}{2}$.
+
+
+3. The "random midpoint" method
+
+The points in the circle were chosen as follows.
+
+ 1. choose random points where $-1\leq x \leq 1$ and $-1\leq y \leq 1$
+ 2. subset points within the circle of radius 1 and center at $(0,0)$
+
+```{r}
+set.seed(1)
+n <- 10000
+df <- data.frame(x=runif(n, -1, 1), y=runif(n, -1, 1))
+df <- df[which(df$x^2 + df$y^2 < 1),]
+r <- sqrt(df$x^2 + df$y^2)
+chords <- 2*sqrt(1-r^2)
+df <- data.frame(chords=chords, longer=chords>sqrt(3))
+# theoretical curve for probablistic density
+f <- function(x) x/2
+# the probability that c > sqrt(3)
+prob <- sum(df$chords>sqrt(3))/length(df$chords)
+hist.chords(df, f)
+```
+
+The theoretical curve fits well to the histogram. The probability that $c\gt\sqrt{3}$ was `r prob` = $\frac{1}{4}$.
+
+Another method to choose random points in the circle is as follows.
+
+ 1. take $x$ where $0\leq x \leq 1$ and $x \sim P(x) = 1$
+ 2. take $\sqrt{x} \sim P(x)=2x$ and call it $r$
+
+```{r}
+set.seed(1)
+n <- 10000
+x <- runif(n, 0, 1)
+r <- sqrt(x) # x~P(x)=2x
+chords <- 2*sqrt(1-r^2)
+df <- data.frame(chords=chords, longer=chords>sqrt(3))
+# theoretical curve for probablistic density
+f <- function(x) x/2
+# the probability that c > sqrt(3)
+prob <- sum(df$chords>sqrt(3))/length(df$chords)
+hist.chords(df, f)
+```
+
+The theoretical curve fits well to the histogram. The probability that $c\gt\sqrt{3}$ was `r prob` = $\frac{1}{4}$.
+
+# Discussion
+
+- The shapes of the models (red lines in the histograms) were quite different
+- The probability of a chord being greater than $\sqrt{3}$ depends on the ratio of the area beyond $c=\sqrt{3}$
+- The skewer the model curve is to the right, the higher the probability was
+
+# Summary
+
+- Mathematical models were obtained for each case of "random selections" in Bertrand paradox
+- The models were validated with computer calculation whose results were pretty close to the models.
+- "Randomness" should be carefully considered as different kinds of randomness may result in quite different conclusions as in this paradox. 
